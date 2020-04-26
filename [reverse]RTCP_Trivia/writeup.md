@@ -1,4 +1,4 @@
-# райтуп
+# Writeup
 
 We have an apk file. From task description we know that it's a quiz app and all we need is  to answer 1000 questions to get the flag.
 Let's check traffic using the BurpSuit's proxy. Here we have sniffed websocket queries:
@@ -9,7 +9,7 @@ Let's decompile apk and look through java code.
 $ d2j-dex2jar client.apk
 $ jd-gui client-dex2jar.jar
 ```
-As we can see, data is encoded with AES and there are two parameters, that some algorithm generates. But зачем думать и реверсить его, если можно использовать фриду. 
+As we can see, data is encoded with AES and there are two parameters, that some algorithm generates. But instead of thinking and reversing let's just use frida.
 
 Downloading frida:
 ```sh
@@ -44,7 +44,7 @@ Java.perform(function x() {
     var sent=false;
 
 
-    // Оверрайдим конструктур JSONObject. Можно видеть в декомпиленном коде, что он создается на каждый новый вопрос.
+    // override the constructor of JSONObject. In the code we can see that JSONObject is created each time a new question appeares.
     Java.use('org.json.JSONObject').$init.overload('java.lang.String').implementation = function(str) {
         var obj = JSON.parse(str);
         if (obj.correctAnswer != undefined){
@@ -54,12 +54,12 @@ Java.perform(function x() {
         return this.$init(str);
     };
 
-    // нам удобно подцепиться к методу doFinal, так как он юзается в момент, когда ключи уже сгенерированы и инстанс Cipher готов к декодированию
+    // It's convinient to hook the doFinal method because it is used when keys are already generated and  Cipher instance  is ready to decode
     Java.use("javax.crypto.Cipher").doFinal.overload('[B').implementation = function(bytes){
         decoded = parseInt( "" + (Java.use('java.lang.String').$new(this.doFinal(Java.use('android.util.Base64').decode(correctEncoded, 0))))); // decoding correctAnswer
 
-        if (!sent){ // чтобы не кидало несколько ответов на один вопрос
-            var kr = Java.use('nw').a();  // это просто скопировали из декомпилера, производит отправку и переход к новому вопросу
+        if (!sent){
+            var kr = Java.use('nw').a();  // this code is just copied from decompiler
             var data = "{\"method\":\"answer\",\"answer\":" + decoded + "}";
             kr.a(data);
             sent = true;
