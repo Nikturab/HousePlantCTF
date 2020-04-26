@@ -44,7 +44,7 @@ Java.perform(function x() {
     var sent=false;
 
 
-    // override the constructor of JSONObject. In the code we can see that JSONObject is created each time a new question appeares.
+    // override the constructor of JSONObject. In the code we can see that JSONObject is created each time a new question appears.
     Java.use('org.json.JSONObject').$init.overload('java.lang.String').implementation = function(str) {
         var obj = JSON.parse(str);
         if (obj.correctAnswer != undefined){
@@ -54,7 +54,7 @@ Java.perform(function x() {
         return this.$init(str);
     };
 
-    // It's convinient to hook the doFinal method because it is used when keys are already generated and  Cipher instance  is ready to decode
+    // It's convenient to hook the doFinal method because it is used when keys are already generated and  Cipher instance  is ready to decode
     Java.use("javax.crypto.Cipher").doFinal.overload('[B').implementation = function(bytes){
         decoded = parseInt( "" + (Java.use('java.lang.String').$new(this.doFinal(Java.use('android.util.Base64').decode(correctEncoded, 0))))); // decoding correctAnswer
 
